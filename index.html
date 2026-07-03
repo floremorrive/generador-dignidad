@@ -290,23 +290,21 @@ const STATE = {
 const CANVAS_W = 1080;
 const CANVAS_H = 1350;
 
-// Colores oficiales del partido — Pantone certificados
-const PURPLE_DARK  = '#442f7f';   // PANTONE Medium Purple C
-const PURPLE_MID   = '#3a2870';   // badge logo (tono ligeramente más oscuro)
-const GOLD         = '#ed7330';   // PANTONE 158 C
-const WHITE        = '#ffffff';
-const OVERLAY      = 'rgba(40,20,90,0.45)'; // overlay sobre foto de fondo
+// ── Colores Pantone oficiales ──────────────────────────────────────────────
+const PURPLE  = '#442f7f';   // PANTONE Medium Purple C  R:68 G:47 B:127
+const ORANGE  = '#ed7330';   // PANTONE 158 C            R:237 G:115 B:48
+const WHITE   = '#ffffff';
+const OVERLAY = 'rgba(68,47,127,0.38)'; // overlay morado Pantone semi-transparente
 
-// ── Layout en píxeles sobre 1080×1350 ──────────────────────────────────────
-const STRIPE_Y    = Math.round(CANVAS_H * 0.555); // línea dorada al 55.5%
-const STRIPE_H    = 10;
-const BG_BOTTOM_Y = STRIPE_Y + STRIPE_H;
+// ── Layout 1080×1350 ───────────────────────────────────────────────────────
+const STRIPE_Y = Math.round(CANVAS_H * 0.555); // línea dorada al 55.5%
+const STRIPE_H = 10;
 
-// Foto: centrada, el 42% queda arriba de la línea y 58% abajo
-const PHOTO_W     = 490;
-const PHOTO_H     = 660;
-const PHOTO_X     = (CANVAS_W - PHOTO_W) / 2;
-const PHOTO_Y     = STRIPE_Y - Math.round(PHOTO_H * 0.42);
+// Foto centrada: 55% arriba de la línea, 45% abajo — igual que en el PPT
+const PHOTO_W  = 480;
+const PHOTO_H  = 620;
+const PHOTO_X  = (CANVAS_W - PHOTO_W) / 2;
+const PHOTO_Y  = STRIPE_Y - Math.round(PHOTO_H * 0.55);
 
 // ── Carga de autores ───────────────────────────────────────────────────────
 async function cargarAutores() {
@@ -451,90 +449,94 @@ function dibujar() {
   const categoria = document.getElementById('sel-categoria').value;
   const autor     = STATE.autorActual;
 
-  // ── 1. Fondo morado completo (base) ───────────────────────────────────
-  ctx.fillStyle = PURPLE_DARK;
+  // CAPA 1 — Morado Pantone en todo el canvas
+  ctx.fillStyle = PURPLE;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // ── 2. Imagen de fondo (zona superior, hasta línea dorada) ────────────
+  // CAPA 2 — Imagen de fondo (solo zona superior, recortada en la línea dorada)
   if (STATE.imgFondo) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, CANVAS_W, BG_BOTTOM_Y);
+    ctx.rect(0, 0, CANVAS_W, STRIPE_Y);
     ctx.clip();
-    drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, BG_BOTTOM_Y);
+    drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, STRIPE_Y);
     ctx.restore();
-    // Overlay morado semitransparente sobre la foto de fondo
+    // Overlay Pantone sobre la foto de fondo
     ctx.fillStyle = OVERLAY;
-    ctx.fillRect(0, 0, CANVAS_W, BG_BOTTOM_Y);
+    ctx.fillRect(0, 0, CANVAS_W, STRIPE_Y);
   }
 
-  // ── 3. Línea dorada divisora ───────────────────────────────────────────
-  ctx.fillStyle = GOLD;
+  // CAPA 3 — Sección morada inferior (garantiza color exacto #442f7f)
+  ctx.fillStyle = PURPLE;
+  ctx.fillRect(0, STRIPE_Y, CANVAS_W, CANVAS_H - STRIPE_Y);
+
+  // CAPA 4 — Línea dorada
+  ctx.fillStyle = ORANGE;
   ctx.fillRect(0, STRIPE_Y, CANVAS_W, STRIPE_H);
 
-  // ── 4. Logo (esquina superior derecha) ────────────────────────────────
-  const LOGO_W = 248; const LOGO_H = 90;
-  const LOGO_X = CANVAS_W - LOGO_W - 22; const LOGO_Y = 22;
-  ctx.fillStyle = PURPLE_MID;
-  ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
+  // CAPA 5 — Logo superior derecho
+  const LW = 248, LH = 90, LX = CANVAS_W - 248 - 22, LY = 22;
+  ctx.fillStyle = PURPLE;
+  ctx.fillRect(LX, LY, LW, LH);
+  // Borde naranja fino
+  ctx.strokeStyle = ORANGE;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(LX, LY, LW, LH);
   ctx.fillStyle = WHITE;
   ctx.font = 'bold 27px Montserrat, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('DIGNIDAD &', LOGO_X + LOGO_W / 2, LOGO_Y + 36);
-  ctx.fillText('COMPROMISO', LOGO_X + LOGO_W / 2, LOGO_Y + 68);
+  ctx.fillText('DIGNIDAD &',  LX + LW / 2, LY + 36);
+  ctx.fillText('COMPROMISO',  LX + LW / 2, LY + 68);
   ctx.textAlign = 'left';
 
-  // ── 5. Textos (se dibujan ANTES que la foto para que la foto quede encima) ──
-  const TEXT_X = 56;
-  const TEXT_W = CANVAS_W - TEXT_X * 2;
-  let curY = STRIPE_Y + 62;
+  // CAPA 6 — TEXTOS en la zona morada (se dibujan ANTES que la foto)
+  const TX = 56, TW = CANVAS_W - TX * 2;
+  let y = STRIPE_Y + 62;
 
   // Categoría
-  ctx.fillStyle = GOLD;
+  ctx.fillStyle = ORANGE;
   ctx.font = 'bold 30px Montserrat, sans-serif';
-  ctx.fillText(categoria, TEXT_X, curY);
-  curY += 54;
+  ctx.fillText(categoria, TX, y);
+  y += 52;
 
-  // Título — reducir fuente si es muy largo
-  const tituloTexto = titulo ? `"${titulo}"` : '"Escriba aquí el título o la frase central de la columna"';
-  const maxTitleH = CANVAS_H - curY - 185;
-  let fontSize = 44;
-  let nLines = 0;
-  for (let fs = fontSize; fs >= 24; fs -= 2) {
+  // Título con auto-reducción de fuente
+  const txt = titulo ? `"${titulo}"` : '"Escriba aquí el título o la frase central de la columna"';
+  const maxH = CANVAS_H - y - 175; // espacio disponible para el título
+  let fs = 44, nl = 0;
+  for (; fs >= 24; fs -= 2) {
     ctx.font = `bold ${fs}px Montserrat, sans-serif`;
     const lh = fs * 1.3;
-    const words = tituloTexto.split(' ');
-    let line = '', lines = 0;
-    for (const w of words) {
-      const t = line ? line + ' ' + w : w;
-      if (ctx.measureText(t).width > TEXT_W && line) { lines++; line = w; } else line = t;
+    const wds = txt.split(' ');
+    let ln = '', cnt = 0;
+    for (const w of wds) {
+      const t = ln ? ln + ' ' + w : w;
+      if (ctx.measureText(t).width > TW && ln) { cnt++; ln = w; } else ln = t;
     }
-    if (line) lines++;
-    if (lines * lh <= maxTitleH) { fontSize = fs; nLines = lines; break; }
+    if (ln) cnt++;
+    if (cnt * lh <= maxH) { nl = cnt; break; }
   }
-  ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
   ctx.fillStyle = WHITE;
-  const lineH = fontSize * 1.3;
-  nLines = wrapText(ctx, tituloTexto, TEXT_X, curY, TEXT_W, lineH);
-  curY += nLines * lineH + 44;
+  ctx.font = `bold ${fs}px Montserrat, sans-serif`;
+  nl = wrapText(ctx, txt, TX, y, TW, fs * 1.3);
+  y += nl * fs * 1.3 + 42;
 
-  // Línea divisora dorada
-  ctx.fillStyle = GOLD;
-  ctx.fillRect(TEXT_X, curY, TEXT_W, 2);
-  curY += 34;
+  // Línea separadora naranja
+  ctx.fillStyle = ORANGE;
+  ctx.fillRect(TX, y, TW, 2);
+  y += 32;
 
   // Nombre del autor
-  ctx.fillStyle = GOLD;
-  ctx.font = 'bold 30px Montserrat, sans-serif';
-  ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TEXT_X, curY);
-  curY += 44;
+  ctx.fillStyle = ORANGE;
+  ctx.font = 'bold 29px Montserrat, sans-serif';
+  ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TX, y);
+  y += 42;
 
   // Bio
   ctx.fillStyle = WHITE;
-  ctx.font = '400 23px Montserrat, sans-serif';
-  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TEXT_X, curY, TEXT_W, 32);
+  ctx.font = '400 22px Montserrat, sans-serif';
+  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TX, y, TW, 30);
 
-  // ── 6. Foto del autor — se dibuja AL FINAL para quedar encima del texto ──
+  // CAPA 7 — Foto del autor AL FINAL (encima del texto, con transparencia PNG)
   const img = STATE.imgPerfil;
   if (img) {
     ctx.save();
@@ -544,11 +546,10 @@ function dibujar() {
     drawImageCover(ctx, img, PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
     ctx.restore();
   } else {
-    // Placeholder
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
     ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.font = '500 24px Montserrat, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '600 22px Montserrat, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
     ctx.textAlign = 'left';
