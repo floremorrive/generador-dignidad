@@ -297,15 +297,22 @@ const WHITE   = '#ffffff';
 const OVERLAY = 'rgba(68,47,127,0.38)'; // overlay morado Pantone semi-transparente
 
 // ── Layout 1080×1350 ───────────────────────────────────────────────────────
-const STRIPE_Y  = Math.round(CANVAS_H * 0.555); // línea dorada al 55.5%
-const STRIPE_H  = 10;
+//  Zona imagen fondo : 0  → STRIPE_Y
+//  Línea naranja     : STRIPE_Y → STRIPE_Y+STRIPE_H
+//  Zona texto morada : STRIPE_Y+STRIPE_H → 1350
+//
+//  La foto vive DENTRO de la zona de imagen (arriba de la línea).
+//  El texto empieza DEBAJO de la línea. JAMÁS se cruzan.
 
-// Foto centrada: termina 60px DEBAJO de la línea dorada (no entra en el texto)
+const STRIPE_Y  = Math.round(CANVAS_H * 0.565); // línea naranja al 56.5%
+const STRIPE_H  = 10;
+const TEXT_START = STRIPE_Y + STRIPE_H + 55;    // texto empieza aquí siempre
+
+// Foto: centrada, termina justo EN la línea naranja (no la cruza)
 const PHOTO_W   = 440;
-const PHOTO_H   = 540;
+const PHOTO_H   = Math.round(STRIPE_Y * 0.72);  // 72% de la zona de imagen
 const PHOTO_X   = (CANVAS_W - PHOTO_W) / 2;
-const PHOTO_BOT = STRIPE_Y + 60;            // fondo de la foto
-const PHOTO_Y   = PHOTO_BOT - PHOTO_H;      // tope de la foto
+const PHOTO_Y   = STRIPE_Y - PHOTO_H;           // pegada al fondo de la zona imagen
 
 // ── Carga de autores ───────────────────────────────────────────────────────
 async function cargarAutores() {
@@ -454,7 +461,7 @@ function dibujar() {
   ctx.fillStyle = PURPLE;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // CAPA 2 — Imagen de fondo (solo zona superior, recortada en la línea dorada)
+  // CAPA 2 — Imagen de fondo (recortada exactamente hasta la línea naranja)
   if (STATE.imgFondo) {
     ctx.save();
     ctx.beginPath();
@@ -462,24 +469,41 @@ function dibujar() {
     ctx.clip();
     drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, STRIPE_Y);
     ctx.restore();
-    // Overlay Pantone sobre la foto de fondo
     ctx.fillStyle = OVERLAY;
     ctx.fillRect(0, 0, CANVAS_W, STRIPE_Y);
   }
 
-  // CAPA 3 — Sección morada inferior (garantiza color exacto #442f7f)
+  // CAPA 3 — Zona morada inferior (garantía de color #442f7f)
   ctx.fillStyle = PURPLE;
   ctx.fillRect(0, STRIPE_Y, CANVAS_W, CANVAS_H - STRIPE_Y);
 
-  // CAPA 4 — Línea dorada
+  // CAPA 4 — Línea naranja
   ctx.fillStyle = ORANGE;
   ctx.fillRect(0, STRIPE_Y, CANVAS_W, STRIPE_H);
 
-  // CAPA 5 — Logo superior derecho
+  // CAPA 5 — Foto del autor (DENTRO de la zona imagen, encima de la línea)
+  const img = STATE.imgPerfil;
+  if (img) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+    ctx.clip();
+    drawImageCover(ctx, img, PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.font = '600 22px Montserrat, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
+    ctx.textAlign = 'left';
+  }
+
+  // CAPA 6 — Logo superior derecho
   const LW = 248, LH = 90, LX = CANVAS_W - 248 - 22, LY = 22;
   ctx.fillStyle = PURPLE;
   ctx.fillRect(LX, LY, LW, LH);
-  // Borde naranja fino
   ctx.strokeStyle = ORANGE;
   ctx.lineWidth = 3;
   ctx.strokeRect(LX, LY, LW, LH);
@@ -490,9 +514,9 @@ function dibujar() {
   ctx.fillText('COMPROMISO',  LX + LW / 2, LY + 68);
   ctx.textAlign = 'left';
 
-  // CAPA 6 — TEXTOS: empiezan DESPUÉS del fondo de la foto, nunca se superponen
+  // CAPA 7 — TEXTOS: empiezan en TEXT_START, siempre debajo de la línea naranja
   const TX = 56, TW = CANVAS_W - TX * 2;
-  let y = PHOTO_BOT + 48;
+  let y = TEXT_START;
 
   // Categoría
   ctx.fillStyle = ORANGE;
@@ -537,24 +561,6 @@ function dibujar() {
   ctx.font = '400 22px Montserrat, sans-serif';
   wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TX, y, TW, 30);
 
-  // CAPA 7 — Foto del autor AL FINAL (encima del texto, con transparencia PNG)
-  const img = STATE.imgPerfil;
-  if (img) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.clip();
-    drawImageCover(ctx, img, PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.restore();
-  } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = '600 22px Montserrat, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
-    ctx.textAlign = 'left';
-  }
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
