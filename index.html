@@ -296,23 +296,42 @@ const ORANGE  = '#ed7330';   // PANTONE 158 C            R:237 G:115 B:48
 const WHITE   = '#ffffff';
 const OVERLAY = 'rgba(68,47,127,0.38)'; // overlay morado Pantone semi-transparente
 
-// ── Layout 1080×1350 ───────────────────────────────────────────────────────
-//  Zona imagen fondo : 0  → STRIPE_Y
-//  Línea naranja     : STRIPE_Y → STRIPE_Y+STRIPE_H
-//  Zona texto morada : STRIPE_Y+STRIPE_H → 1350
-//
-//  La foto vive DENTRO de la zona de imagen (arriba de la línea).
-//  El texto empieza DEBAJO de la línea. JAMÁS se cruzan.
+// ── Layout exacto extraído del archivo PPT original ────────────────────────
+// Slide PPT: 540pt × 675pt  →  Canvas: 1080px × 1350px  (escala 2×)
+const W = CANVAS_W, H = CANVAS_H;
+const p = (pct, total) => Math.round(pct / 100 * total); // % a píxeles
 
-const STRIPE_Y  = Math.round(CANVAS_H * 0.565); // línea naranja al 56.5%
-const STRIPE_H  = 10;
-const TEXT_START = STRIPE_Y + STRIPE_H + 55;    // texto empieza aquí siempre
+// Línea naranja
+const STRIPE_Y = p(52.5, H);   // 709
+const STRIPE_H = p( 0.7, H);   // 9
 
-// Foto: centrada, termina justo EN la línea naranja (no la cruza)
-const PHOTO_W   = 440;
-const PHOTO_H   = Math.round(STRIPE_Y * 0.72);  // 72% de la zona de imagen
-const PHOTO_X   = (CANVAS_W - PHOTO_W) / 2;
-const PHOTO_Y   = STRIPE_Y - PHOTO_H;           // pegada al fondo de la zona imagen
+// Foto (Perfil) — medidas exactas del PPT
+const PHOTO_X = p(26.7, W);    // 288
+const PHOTO_Y = p(27.2, H);    // 367
+const PHOTO_W = p(46.7, W);    // 504
+const PHOTO_H = p(40.5, H);    // 547   bottom = 914
+
+// Logo — medidas exactas del PPT
+const LOGO_X = p(71.0, W);     // 767
+const LOGO_Y = p( 3.8, H);     // 51
+const LOGO_W = p(28.0, W);     // 302
+const LOGO_H = p( 7.5, H);     // 101
+
+// Texto — posiciones exactas del PPT
+const TX   = p( 6.0, W);       // 65  (left margin)
+const TW   = p(88.0, W);       // 950 (text width)
+const Y_CAT   = p(66.1, H);    // 892  OPINIÓN
+const Y_TIT   = p(69.9, H);    // 944  Título
+const Y_MAX   = p(86.4, H);    // 1166 Título bottom (espacio disponible)
+const Y_LIN   = p(88.0, H);    // 1188 Línea divisora
+const Y_AUT   = p(89.4, H);    // 1207 Autor
+const Y_BIO   = p(93.1, H);    // 1257 Bio
+
+// Tamaños de fuente escalados del PPT (pt × 2 × 1.333 = pt × 2.667)
+const F_CAT = 38;   // 14pt en PPT
+const F_TIT = 50;   // 19pt en PPT  (se reduce si el título es largo)
+const F_AUT = 30;   // 11.5pt en PPT
+const F_BIO = 24;   // 9pt en PPT
 
 // ── Carga de autores ───────────────────────────────────────────────────────
 async function cargarAutores() {
@@ -457,31 +476,31 @@ function dibujar() {
   const categoria = document.getElementById('sel-categoria').value;
   const autor     = STATE.autorActual;
 
-  // CAPA 1 — Morado Pantone en todo el canvas
+  // 1 — Base morada
   ctx.fillStyle = PURPLE;
-  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+  ctx.fillRect(0, 0, W, H);
 
-  // CAPA 2 — Imagen de fondo (recortada exactamente hasta la línea naranja)
+  // 2 — Imagen de fondo (zona superior hasta la línea naranja)
   if (STATE.imgFondo) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, CANVAS_W, STRIPE_Y);
+    ctx.rect(0, 0, W, STRIPE_Y);
     ctx.clip();
-    drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, STRIPE_Y);
+    drawImageCover(ctx, STATE.imgFondo, 0, 0, W, STRIPE_Y);
     ctx.restore();
     ctx.fillStyle = OVERLAY;
-    ctx.fillRect(0, 0, CANVAS_W, STRIPE_Y);
+    ctx.fillRect(0, 0, W, STRIPE_Y);
   }
 
-  // CAPA 3 — Zona morada inferior (garantía de color #442f7f)
+  // 3 — Zona morada inferior (garantía de color exacto)
   ctx.fillStyle = PURPLE;
-  ctx.fillRect(0, STRIPE_Y, CANVAS_W, CANVAS_H - STRIPE_Y);
+  ctx.fillRect(0, STRIPE_Y, W, H - STRIPE_Y);
 
-  // CAPA 4 — Línea naranja
+  // 4 — Línea naranja
   ctx.fillStyle = ORANGE;
-  ctx.fillRect(0, STRIPE_Y, CANVAS_W, STRIPE_H);
+  ctx.fillRect(0, STRIPE_Y, W, STRIPE_H);
 
-  // CAPA 5 — Foto del autor (DENTRO de la zona imagen, encima de la línea)
+  // 5 — Foto del autor (posición exacta del PPT original)
   const img = STATE.imgPerfil;
   if (img) {
     ctx.save();
@@ -491,75 +510,66 @@ function dibujar() {
     drawImageCover(ctx, img, PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
     ctx.restore();
   } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
     ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
-    ctx.font = '600 22px Montserrat, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = `600 22px Montserrat, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
+    ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2 + 10);
     ctx.textAlign = 'left';
   }
 
-  // CAPA 6 — Logo superior derecho
-  const LW = 248, LH = 90, LX = CANVAS_W - 248 - 22, LY = 22;
+  // 6 — Logo (posición exacta del PPT)
   ctx.fillStyle = PURPLE;
-  ctx.fillRect(LX, LY, LW, LH);
-  ctx.strokeStyle = ORANGE;
-  ctx.lineWidth = 3;
-  ctx.strokeRect(LX, LY, LW, LH);
+  ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 27px Montserrat, sans-serif';
+  ctx.font = `bold ${Math.round(LOGO_H * 0.34)}px Montserrat, sans-serif`;
   ctx.textAlign = 'center';
-  ctx.fillText('DIGNIDAD &',  LX + LW / 2, LY + 36);
-  ctx.fillText('COMPROMISO',  LX + LW / 2, LY + 68);
+  ctx.fillText('DIGNIDAD &',  LOGO_X + LOGO_W / 2, LOGO_Y + LOGO_H * 0.42);
+  ctx.fillText('COMPROMISO',  LOGO_X + LOGO_W / 2, LOGO_Y + LOGO_H * 0.82);
   ctx.textAlign = 'left';
 
-  // CAPA 7 — TEXTOS: empiezan en TEXT_START, siempre debajo de la línea naranja
-  const TX = 56, TW = CANVAS_W - TX * 2;
-  let y = TEXT_START;
-
+  // 7 — Textos (posiciones exactas del PPT)
   // Categoría
   ctx.fillStyle = ORANGE;
-  ctx.font = 'bold 30px Montserrat, sans-serif';
-  ctx.fillText(categoria, TX, y);
-  y += 52;
+  ctx.font = `bold ${F_CAT}px Montserrat, sans-serif`;
+  ctx.fillText(categoria, TX, Y_CAT + F_CAT);
 
-  // Título con auto-reducción de fuente
-  const txt = titulo ? `"${titulo}"` : '"Escriba aquí el título o la frase central de la columna"';
-  const maxH = CANVAS_H - y - 175; // espacio disponible para el título
-  let fs = 44, nl = 0;
+  // Título — ajustar fuente para que quepa en el espacio disponible
+  const txt = titulo
+    ? `"${titulo}"`
+    : '"Escriba aquí el título o la frase central de la columna"';
+  const maxTitH = Y_MAX - Y_TIT;
+  let fs = F_TIT;
   for (; fs >= 24; fs -= 2) {
     ctx.font = `bold ${fs}px Montserrat, sans-serif`;
-    const lh = fs * 1.3;
+    const lh = fs * 1.32;
     const wds = txt.split(' ');
     let ln = '', cnt = 0;
-    for (const w of wds) {
-      const t = ln ? ln + ' ' + w : w;
-      if (ctx.measureText(t).width > TW && ln) { cnt++; ln = w; } else ln = t;
+    for (const wd of wds) {
+      const t = ln ? ln + ' ' + wd : wd;
+      if (ctx.measureText(t).width > TW && ln) { cnt++; ln = wd; } else ln = t;
     }
     if (ln) cnt++;
-    if (cnt * lh <= maxH) { nl = cnt; break; }
+    if (cnt * lh <= maxTitH) break;
   }
   ctx.fillStyle = WHITE;
   ctx.font = `bold ${fs}px Montserrat, sans-serif`;
-  nl = wrapText(ctx, txt, TX, y, TW, fs * 1.3);
-  y += nl * fs * 1.3 + 42;
+  wrapText(ctx, txt, TX, Y_TIT + fs, TW, fs * 1.32);
 
-  // Línea separadora naranja
+  // Línea divisora
   ctx.fillStyle = ORANGE;
-  ctx.fillRect(TX, y, TW, 2);
-  y += 32;
+  ctx.fillRect(TX, Y_LIN, TW, 2);
 
   // Nombre del autor
   ctx.fillStyle = ORANGE;
-  ctx.font = 'bold 29px Montserrat, sans-serif';
-  ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TX, y);
-  y += 42;
+  ctx.font = `bold ${F_AUT}px Montserrat, sans-serif`;
+  ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TX, Y_AUT + F_AUT);
 
   // Bio
   ctx.fillStyle = WHITE;
-  ctx.font = '400 22px Montserrat, sans-serif';
-  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TX, y, TW, 30);
+  ctx.font = `${F_BIO}px Montserrat, sans-serif`;
+  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TX, Y_BIO + F_BIO, TW, F_BIO * 1.4);
 
 }
 
