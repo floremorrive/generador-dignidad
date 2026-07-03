@@ -4,12 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Generador de Columnas — Dignidad & Compromiso</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Alexandria', sans-serif;
     background: #0d0520;
     color: #fff;
     min-height: 100vh;
@@ -58,7 +58,7 @@
     background: #2d1a6e;
     border: 1px solid #4a2fa0;
     color: #fff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Alexandria', sans-serif;
     font-size: .92rem;
     padding: 10px 12px;
     border-radius: 6px;
@@ -105,7 +105,7 @@
   .gen-btn {
     background: #f5a623;
     color: #1a0a4a;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Alexandria', sans-serif;
     font-size: 1rem;
     font-weight: 800;
     border: none;
@@ -121,7 +121,7 @@
   .dl-btn {
     background: #2d1a6e;
     color: #f5a623;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Alexandria', sans-serif;
     font-size: .88rem;
     font-weight: 700;
     border: 2px solid #f5a623;
@@ -496,7 +496,11 @@ function dibujar() {
   ctx.fillStyle = PURPLE;
   ctx.fillRect(0, STRIPE_Y, W, H - STRIPE_Y);
 
-  // 4 — Foto del autor: escala proporcional SIN clip
+  // 4 — Sombra fondo: cuadro semitransparente detrás de la foto (elemento de diseño original PPT)
+  ctx.fillStyle = 'rgba(0,0,0,0.42)';
+  ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+
+  // 5 — Foto del autor: escala proporcional SIN clip
   //     La transparencia del PNG fluye al canvas sin crear bordes visibles
   const img = STATE.imgPerfil;
   if (img) {
@@ -510,7 +514,7 @@ function dibujar() {
     ctx.fillStyle = 'rgba(255,255,255,0.07)';
     ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
     ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = `600 22px Montserrat, sans-serif`;
+    ctx.font = `600 22px Alexandria, sans-serif`;
     ctx.textAlign = 'center';
     ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2 + 10);
     ctx.textAlign = 'left';
@@ -524,7 +528,7 @@ function dibujar() {
   ctx.fillStyle = PURPLE;
   ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
   ctx.fillStyle = WHITE;
-  ctx.font = `bold ${Math.round(LOGO_H * 0.34)}px Montserrat, sans-serif`;
+  ctx.font = `bold ${Math.round(LOGO_H * 0.34)}px Alexandria, sans-serif`;
   ctx.textAlign = 'center';
   ctx.fillText('DIGNIDAD &',  LOGO_X + LOGO_W / 2, LOGO_Y + LOGO_H * 0.42);
   ctx.fillText('COMPROMISO',  LOGO_X + LOGO_W / 2, LOGO_Y + LOGO_H * 0.82);
@@ -533,7 +537,7 @@ function dibujar() {
   // 7 — Textos (posiciones exactas del PPT)
   // Categoría
   ctx.fillStyle = ORANGE;
-  ctx.font = `bold ${F_CAT}px Montserrat, sans-serif`;
+  ctx.font = `bold ${F_CAT}px Alexandria, sans-serif`;
   ctx.fillText(categoria, TX, Y_CAT + F_CAT);
 
   // Título — ajustar fuente para que quepa en el espacio disponible
@@ -543,7 +547,7 @@ function dibujar() {
   const maxTitH = Y_MAX - Y_TIT;
   let fs = F_TIT;
   for (; fs >= 24; fs -= 2) {
-    ctx.font = `bold ${fs}px Montserrat, sans-serif`;
+    ctx.font = `bold ${fs}px Alexandria, sans-serif`;
     const lh = fs * 1.32;
     const wds = txt.split(' ');
     let ln = '', cnt = 0;
@@ -555,7 +559,7 @@ function dibujar() {
     if (cnt * lh <= maxTitH) break;
   }
   ctx.fillStyle = WHITE;
-  ctx.font = `bold ${fs}px Montserrat, sans-serif`;
+  ctx.font = `bold ${fs}px Alexandria, sans-serif`;
   wrapText(ctx, txt, TX, Y_TIT + fs, TW, fs * 1.32);
 
   // Línea divisora
@@ -564,12 +568,12 @@ function dibujar() {
 
   // Nombre del autor
   ctx.fillStyle = ORANGE;
-  ctx.font = `bold ${F_AUT}px Montserrat, sans-serif`;
+  ctx.font = `bold ${F_AUT}px Alexandria, sans-serif`;
   ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TX, Y_AUT + F_AUT);
 
   // Bio
   ctx.fillStyle = WHITE;
-  ctx.font = `${F_BIO}px Montserrat, sans-serif`;
+  ctx.font = `${F_BIO}px Alexandria, sans-serif`;
   wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TX, Y_BIO + F_BIO, TW, F_BIO * 1.4);
 
 }
