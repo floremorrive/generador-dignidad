@@ -290,20 +290,26 @@ const STATE = {
 const CANVAS_W = 1080;
 const CANVAS_H = 1350;
 
-// Colores del partido
-const PURPLE_DARK  = '#1a0a4a';
-const PURPLE_MID   = '#3d1a8a';
-const GOLD         = '#f5a623';
+// Colores del partido — extraídos del PowerPoint original
+const PURPLE_DARK  = '#1e0751';   // fondo morado profundo
+const PURPLE_MID   = '#3d1280';   // badge logo
+const GOLD         = '#f5a623';   // dorado/naranja partido
 const WHITE        = '#ffffff';
-const OVERLAY      = 'rgba(26,10,74,0.52)';
+const OVERLAY      = 'rgba(20,5,60,0.48)'; // overlay sobre foto de fondo
 
-// Layout (fracciones de CANVAS_H / CANVAS_W)
-const BG_BOTTOM_Y  = Math.round(CANVAS_H * 0.565); // donde termina la foto de fondo
+// ── Layout en píxeles sobre 1080×1350 ──────────────────────────────────────
+// Línea dorada: 43% del alto
+const STRIPE_Y     = Math.round(CANVAS_H * 0.43);   // y donde empieza la línea
 const STRIPE_H     = 10;
-const PHOTO_W      = 460;
-const PHOTO_H      = 520;
+
+// Foto del autor: centrada, sobresale ampliamente bajo la línea
+const PHOTO_W      = 500;
+const PHOTO_H      = 600;
 const PHOTO_X      = (CANVAS_W - PHOTO_W) / 2;
-const PHOTO_Y      = BG_BOTTOM_Y - PHOTO_H * 0.62; // foto sobresale sobre la línea
+const PHOTO_Y      = STRIPE_Y - Math.round(PHOTO_H * 0.38); // 38% arriba de la línea
+
+// Zona de fondo (imagen): ocupa desde 0 hasta STRIPE_Y + un poco
+const BG_BOTTOM_Y  = STRIPE_Y + STRIPE_H;
 
 // ── Carga de autores ───────────────────────────────────────────────────────
 async function cargarAutores() {
@@ -448,46 +454,40 @@ function dibujar() {
   const categoria = document.getElementById('sel-categoria').value;
   const autor     = STATE.autorActual;
 
-  // Fondo completo (fallback morado)
+  // ── 1. Fondo morado completo (base) ───────────────────────────────────
   ctx.fillStyle = PURPLE_DARK;
   ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
-  // ── Imagen de fondo (parte superior) ──────────────────────────────────
+  // ── 2. Imagen de fondo (zona superior, hasta línea dorada) ────────────
   if (STATE.imgFondo) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, CANVAS_W, BG_BOTTOM_Y + STRIPE_H);
+    ctx.rect(0, 0, CANVAS_W, BG_BOTTOM_Y);
     ctx.clip();
-    drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, BG_BOTTOM_Y + STRIPE_H);
+    drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, BG_BOTTOM_Y);
     ctx.restore();
-    // Overlay oscuro sobre el fondo
+    // Overlay morado semitransparente sobre la foto de fondo
     ctx.fillStyle = OVERLAY;
-    ctx.fillRect(0, 0, CANVAS_W, BG_BOTTOM_Y + STRIPE_H);
+    ctx.fillRect(0, 0, CANVAS_W, BG_BOTTOM_Y);
   }
 
-  // ── Sección morada inferior ────────────────────────────────────────────
-  ctx.fillStyle = PURPLE_DARK;
-  ctx.fillRect(0, BG_BOTTOM_Y, CANVAS_W, CANVAS_H - BG_BOTTOM_Y);
-
-  // ── Línea dorada divisora ──────────────────────────────────────────────
+  // ── 3. Línea dorada divisora ───────────────────────────────────────────
   ctx.fillStyle = GOLD;
-  ctx.fillRect(0, BG_BOTTOM_Y - STRIPE_H / 2, CANVAS_W, STRIPE_H);
+  ctx.fillRect(0, STRIPE_Y, CANVAS_W, STRIPE_H);
 
-  // ── Logo Dignidad & Compromiso (esquina superior derecha) ─────────────
-  const LOGO_X = CANVAS_W - 270;
-  const LOGO_Y = 26;
-  const LOGO_W = 244;
-  const LOGO_H = 88;
+  // ── 4. Logo (esquina superior derecha) ────────────────────────────────
+  const LOGO_W = 248; const LOGO_H = 90;
+  const LOGO_X = CANVAS_W - LOGO_W - 22; const LOGO_Y = 22;
   ctx.fillStyle = PURPLE_MID;
   ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
   ctx.fillStyle = WHITE;
-  ctx.font = 'bold 26px Montserrat, sans-serif';
+  ctx.font = 'bold 27px Montserrat, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('DIGNIDAD &', LOGO_X + LOGO_W / 2, LOGO_Y + 34);
-  ctx.fillText('COMPROMISO', LOGO_X + LOGO_W / 2, LOGO_Y + 64);
+  ctx.fillText('DIGNIDAD &', LOGO_X + LOGO_W / 2, LOGO_Y + 36);
+  ctx.fillText('COMPROMISO', LOGO_X + LOGO_W / 2, LOGO_Y + 68);
   ctx.textAlign = 'left';
 
-  // ── Foto del autor ─────────────────────────────────────────────────────
+  // ── 5. Foto del autor (centrada, sobresale sobre la línea) ────────────
   const img = STATE.imgPerfil;
   if (img) {
     ctx.save();
@@ -497,63 +497,70 @@ function dibujar() {
     drawImageCover(ctx, img, PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
     ctx.restore();
   } else {
-    // Placeholder gris
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
     ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.fillStyle = 'rgba(255,255,255,0.25)';
-    ctx.font = '500 22px Montserrat, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.font = '500 24px Montserrat, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
     ctx.textAlign = 'left';
   }
 
-  // ── Textos (sección inferior) ──────────────────────────────────────────
-  const TEXT_X  = 55;
-  const TEXT_W  = CANVAS_W - TEXT_X * 2;
-  let   curY    = BG_BOTTOM_Y + 60;
+  // ── 6. Textos (zona inferior, debajo de la foto) ───────────────────────
+  const TEXT_X = 56;
+  const TEXT_W = CANVAS_W - TEXT_X * 2;
+  // El texto empieza después de donde termina la foto del autor
+  const TEXT_START_Y = PHOTO_Y + PHOTO_H + 48;
+
+  let curY = TEXT_START_Y;
 
   // Categoría
   ctx.fillStyle = GOLD;
-  ctx.font = 'bold 28px Montserrat, sans-serif';
+  ctx.font = 'bold 30px Montserrat, sans-serif';
   ctx.fillText(categoria, TEXT_X, curY);
-  curY += 52;
+  curY += 54;
 
-  // Título
-  ctx.fillStyle = WHITE;
-  ctx.font = 'bold 42px Montserrat, sans-serif';
+  // Título — ajustar tamaño para que siempre quepa
   const tituloTexto = titulo ? `"${titulo}"` : '"Escriba aquí el título o la frase central de la columna"';
-
-  // Reducir fuente si el texto es muy largo
-  let fontSize = 42;
-  const estimatedLines = Math.ceil(ctx.measureText(tituloTexto).width / TEXT_W);
-  if (estimatedLines > 4) {
-    fontSize = 34;
-    ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
+  let fontSize = 44;
+  ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
+  // Espacio disponible para el título (hasta 120px antes del pie)
+  const maxTitleH = CANVAS_H - curY - 180;
+  let nLines = 0;
+  for (let fs = fontSize; fs >= 24; fs -= 2) {
+    ctx.font = `bold ${fs}px Montserrat, sans-serif`;
+    const lh = fs * 1.28;
+    const words = tituloTexto.split(' ');
+    let line = '', lines = 0;
+    for (const w of words) {
+      const t = line ? line + ' ' + w : w;
+      if (ctx.measureText(t).width > TEXT_W && line) { lines++; line = w; }
+      else line = t;
+    }
+    if (line) lines++;
+    if (lines * lh <= maxTitleH) { fontSize = fs; nLines = lines; break; }
   }
-  if (estimatedLines > 6) {
-    fontSize = 28;
-    ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
-  }
-
+  ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
+  ctx.fillStyle = WHITE;
   const lineH = fontSize * 1.28;
-  const nLines = wrapText(ctx, tituloTexto, TEXT_X, curY, TEXT_W, lineH);
-  curY += nLines * lineH + 44;
+  nLines = wrapText(ctx, tituloTexto, TEXT_X, curY, TEXT_W, lineH);
+  curY += nLines * lineH + 40;
 
   // Línea divisora dorada
   ctx.fillStyle = GOLD;
   ctx.fillRect(TEXT_X, curY, TEXT_W, 2);
-  curY += 30;
+  curY += 32;
 
   // Nombre del autor
   ctx.fillStyle = GOLD;
-  ctx.font = 'bold 28px Montserrat, sans-serif';
+  ctx.font = 'bold 30px Montserrat, sans-serif';
   ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TEXT_X, curY);
-  curY += 38;
+  curY += 42;
 
   // Bio
   ctx.fillStyle = WHITE;
-  ctx.font = '400 22px Montserrat, sans-serif';
-  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TEXT_X, curY, TEXT_W, 30);
+  ctx.font = '400 23px Montserrat, sans-serif';
+  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TEXT_X, curY, TEXT_W, 32);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
