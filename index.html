@@ -297,14 +297,15 @@ const WHITE   = '#ffffff';
 const OVERLAY = 'rgba(68,47,127,0.38)'; // overlay morado Pantone semi-transparente
 
 // ── Layout 1080×1350 ───────────────────────────────────────────────────────
-const STRIPE_Y = Math.round(CANVAS_H * 0.555); // línea dorada al 55.5%
-const STRIPE_H = 10;
+const STRIPE_Y  = Math.round(CANVAS_H * 0.555); // línea dorada al 55.5%
+const STRIPE_H  = 10;
 
-// Foto centrada: 55% arriba de la línea, 45% abajo — igual que en el PPT
-const PHOTO_W  = 480;
-const PHOTO_H  = 620;
-const PHOTO_X  = (CANVAS_W - PHOTO_W) / 2;
-const PHOTO_Y  = STRIPE_Y - Math.round(PHOTO_H * 0.55);
+// Foto centrada: termina 60px DEBAJO de la línea dorada (no entra en el texto)
+const PHOTO_W   = 440;
+const PHOTO_H   = 540;
+const PHOTO_X   = (CANVAS_W - PHOTO_W) / 2;
+const PHOTO_BOT = STRIPE_Y + 60;            // fondo de la foto
+const PHOTO_Y   = PHOTO_BOT - PHOTO_H;      // tope de la foto
 
 // ── Carga de autores ───────────────────────────────────────────────────────
 async function cargarAutores() {
@@ -489,9 +490,9 @@ function dibujar() {
   ctx.fillText('COMPROMISO',  LX + LW / 2, LY + 68);
   ctx.textAlign = 'left';
 
-  // CAPA 6 — TEXTOS en la zona morada (se dibujan ANTES que la foto)
+  // CAPA 6 — TEXTOS: empiezan DESPUÉS del fondo de la foto, nunca se superponen
   const TX = 56, TW = CANVAS_W - TX * 2;
-  let y = STRIPE_Y + 62;
+  let y = PHOTO_BOT + 48;
 
   // Categoría
   ctx.fillStyle = ORANGE;
