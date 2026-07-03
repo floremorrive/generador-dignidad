@@ -284,7 +284,8 @@ const STATE = {
   autorActual: null,
   imgFondo: null,
   imgPerfil: null,
-  imgPerfilLocal: null, // override local para el autor seleccionado
+  imgPerfilLocal: null,
+  imgLogo: null,
 };
 
 const CANVAS_W = 1080;
@@ -296,42 +297,48 @@ const ORANGE  = '#ed7330';   // PANTONE 158 C            R:237 G:115 B:48
 const WHITE   = '#ffffff';
 const OVERLAY = 'rgba(68,47,127,0.38)'; // overlay morado Pantone semi-transparente
 
-// ── Layout exacto extraído del archivo PPT original ────────────────────────
-// Slide PPT: 540pt × 675pt  →  Canvas: 1080px × 1350px  (escala 2×)
+// ── Layout EXACTO extraído del PPT (python-pptx, julio 2026) ─────────────
+// Slide: 19.05cm × 23.812cm  →  Canvas: 1080px × 1350px
 const W = CANVAS_W, H = CANVAS_H;
-const p = (pct, total) => Math.round(pct / 100 * total); // % a píxeles
+const p = (pct, total) => Math.round(pct / 100 * total);
 
-// Línea naranja
-const STRIPE_Y = p(52.5, H);   // 709
-const STRIPE_H = p( 0.7, H);   // 9
+// Fondo (imagen de fondo): 0-53.23%
+const FONDO_H = p(53.23, H);   // 719
 
-// Foto (Perfil) — medidas exactas del PPT
-const PHOTO_X = p(26.7, W);    // 288
-const PHOTO_Y = p(27.2, H);    // 367
-const PHOTO_W = p(46.7, W);    // 504
-const PHOTO_H = p(40.5, H);    // 547   bottom = 914
+// Raya naranja (Shape 6 dentro de Grupo 9): top=52.48%, h=0.75%
+const STRIPE_Y = p(52.48, H);  // 708
+const STRIPE_H = p( 0.75, H);  // 10
 
-// Logo — medidas exactas del PPT
-const LOGO_X = p(71.0, W);     // 767
-const LOGO_Y = p( 3.8, H);     // 51
-const LOGO_W = p(28.0, W);     // 302
-const LOGO_H = p( 7.5, H);     // 101
+// Sección morada inferior (Shape 5): top=52.80%
+const PURPLE_Y = p(52.80, H);  // 713
+
+// Sombra fondo: left=26.67%, top=27.20%, w=46.67%, h=40.53%
+const SHADOW_X = p(26.67, W);  // 288
+const SHADOW_Y = p(27.20, H);  // 367
+const SHADOW_W = p(46.67, W);  // 504
+const SHADOW_H = p(40.53, H);  // 547
+
+// Logo imagen: left=70.85%, top=3.53%, w=27.98%, h=7.47%
+const LOGO_X = p(70.85, W);    // 765
+const LOGO_Y = p( 3.53, H);    // 48
+const LOGO_W = p(27.98, W);    // 302
+const LOGO_H = p( 7.47, H);    // 101
 
 // Texto — posiciones exactas del PPT
-const TX   = p( 6.0, W);       // 65  (left margin)
-const TW   = p(88.0, W);       // 950 (text width)
-const Y_CAT   = p(66.1, H);    // 892  OPINIÓN
-const Y_TIT   = p(69.9, H);    // 944  Título
-const Y_MAX   = p(86.4, H);    // 1166 Título bottom (espacio disponible)
-const Y_LIN   = p(88.0, H);    // 1188 Línea divisora
-const Y_AUT   = p(89.4, H);    // 1207 Autor
-const Y_BIO   = p(93.1, H);    // 1257 Bio
+const TX    = p( 6.00, W);     // 65
+const TW    = p(88.00, W);     // 950
+const Y_CAT = p(66.13, H);     // 893  OPINIÓN
+const Y_TIT = p(69.87, H);     // 943  Título
+const Y_MAX = p(86.40, H);     // 1166 Título bottom
+const Y_LIN = p(88.00, H);     // 1188 Línea divisora
+const Y_AUT = p(89.39, H);     // 1207 Autor
+const Y_BIO = p(93.12, H);     // 1257 Bio
 
-// Tamaños de fuente escalados del PPT (pt × 2 × 1.333 = pt × 2.667)
-const F_CAT = 38;   // 14pt en PPT
-const F_TIT = 50;   // 19pt en PPT  (se reduce si el título es largo)
-const F_AUT = 30;   // 11.5pt en PPT
-const F_BIO = 24;   // 9pt en PPT
+// Tamaños de fuente (pt PPT × 2 = px canvas)
+const F_CAT = 38;
+const F_TIT = 50;
+const F_AUT = 30;
+const F_BIO = 24;
 
 // ── Carga de autores ───────────────────────────────────────────────────────
 async function cargarAutores() {
@@ -476,71 +483,65 @@ function dibujar() {
   const categoria = document.getElementById('sel-categoria').value;
   const autor     = STATE.autorActual;
 
-  // 1 — Base morada
+  // 1 — Base morada (canvas completo)
   ctx.fillStyle = PURPLE;
   ctx.fillRect(0, 0, W, H);
 
-  // 2 — Imagen de fondo (zona superior hasta la línea naranja)
+  // 2 — Imagen de fondo recortada a la zona superior (Fondo: 0-53.23%)
   if (STATE.imgFondo) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, 0, W, STRIPE_Y);
+    ctx.rect(0, 0, W, FONDO_H);
     ctx.clip();
-    drawImageCover(ctx, STATE.imgFondo, 0, 0, W, STRIPE_Y);
+    drawImageCover(ctx, STATE.imgFondo, 0, 0, W, FONDO_H);
     ctx.restore();
+    // Overlay morado Pantone sobre la foto de fondo
     ctx.fillStyle = OVERLAY;
-    ctx.fillRect(0, 0, W, STRIPE_Y);
+    ctx.fillRect(0, 0, W, FONDO_H);
   }
 
-  // 3 — Zona morada inferior (garantía de color exacto)
+  // 3 — Sección morada inferior sólida (Shape 5, desde 52.80%)
   ctx.fillStyle = PURPLE;
-  ctx.fillRect(0, STRIPE_Y, W, H - STRIPE_Y);
+  ctx.fillRect(0, PURPLE_Y, W, H - PURPLE_Y);
 
-  // 4 — Sombra fondo: cuadro semitransparente detrás de la foto (elemento de diseño original PPT)
-  ctx.fillStyle = 'rgba(0,0,0,0.42)';
-  ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-
-  // 5 — Foto del autor: escala proporcional SIN clip
-  //     La transparencia del PNG fluye al canvas sin crear bordes visibles
-  const img = STATE.imgPerfil;
-  if (img) {
-    const scale = Math.min(PHOTO_W / img.naturalWidth, PHOTO_H / img.naturalHeight);
-    const dw = img.naturalWidth  * scale;
-    const dh = img.naturalHeight * scale;
-    const dx = PHOTO_X + (PHOTO_W - dw) / 2;
-    const dy = PHOTO_Y + (PHOTO_H - dh) / 2;
-    ctx.drawImage(img, dx, dy, dw, dh);
-  } else {
-    ctx.fillStyle = 'rgba(255,255,255,0.07)';
-    ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    ctx.font = `600 22px Alexandria, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2 + 10);
-    ctx.textAlign = 'left';
-  }
-
-  // 5 — Línea naranja (sobre la foto, igual que en el PPT)
+  // 4 — Raya naranja (Shape 6: top=52.48%, h=0.75%) — DETRÁS de sombra y foto
   ctx.fillStyle = ORANGE;
   ctx.fillRect(0, STRIPE_Y, W, STRIPE_H);
 
-  // 6 — Logo (sin borde naranja — igual que el original)
-  ctx.fillStyle = PURPLE;
-  ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
-  ctx.fillStyle = WHITE;
-  ctx.font = `bold ${Math.round(LOGO_H * 0.34)}px Alexandria, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.fillText('DIGNIDAD &',  LOGO_X + LOGO_W / 2, LOGO_Y + LOGO_H * 0.42);
-  ctx.fillText('COMPROMISO',  LOGO_X + LOGO_W / 2, LOGO_Y + LOGO_H * 0.82);
-  ctx.textAlign = 'left';
+  // 5 — Logo (imagen PNG extraída del PPT original)
+  if (STATE.imgLogo) {
+    ctx.drawImage(STATE.imgLogo, LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
+  }
 
-  // 7 — Textos (posiciones exactas del PPT)
-  // Categoría
+  // 6 — Sombra fondo: cuadro semitransparente detrás de la foto (diseño original PPT)
+  ctx.fillStyle = 'rgba(0,0,0,0.42)';
+  ctx.fillRect(SHADOW_X, SHADOW_Y, SHADOW_W, SHADOW_H);
+
+  // 7 — Foto del autor: llena exactamente el cuadro de la sombra fondo
+  const img = STATE.imgPerfil;
+  if (img) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(SHADOW_X, SHADOW_Y, SHADOW_W, SHADOW_H);
+    ctx.clip();
+    drawImageCover(ctx, img, SHADOW_X, SHADOW_Y, SHADOW_W, SHADOW_H);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.fillRect(SHADOW_X, SHADOW_Y, SHADOW_W, SHADOW_H);
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = `22px Alexandria, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('Foto del autor', SHADOW_X + SHADOW_W / 2, SHADOW_Y + SHADOW_H / 2 + 10);
+    ctx.textAlign = 'left';
+  }
+
+  // 8 — Categoría (OPINIÓN / ANÁLISIS / ...)
   ctx.fillStyle = ORANGE;
   ctx.font = `bold ${F_CAT}px Alexandria, sans-serif`;
   ctx.fillText(categoria, TX, Y_CAT + F_CAT);
 
-  // Título — ajustar fuente para que quepa en el espacio disponible
+  // 9 — Título — fuente se reduce si el texto es largo
   const txt = titulo
     ? `"${titulo}"`
     : '"Escriba aquí el título o la frase central de la columna"';
@@ -562,24 +563,34 @@ function dibujar() {
   ctx.font = `bold ${fs}px Alexandria, sans-serif`;
   wrapText(ctx, txt, TX, Y_TIT + fs, TW, fs * 1.32);
 
-  // Línea divisora
+  // 10 — Línea divisora horizontal
   ctx.fillStyle = ORANGE;
   ctx.fillRect(TX, Y_LIN, TW, 2);
 
-  // Nombre del autor
+  // 11 — Nombre del autor
   ctx.fillStyle = ORANGE;
   ctx.font = `bold ${F_AUT}px Alexandria, sans-serif`;
   ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TX, Y_AUT + F_AUT);
 
-  // Bio
+  // 12 — Bio
   ctx.fillStyle = WHITE;
   ctx.font = `${F_BIO}px Alexandria, sans-serif`;
   wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TX, Y_BIO + F_BIO, TW, F_BIO * 1.4);
-
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
-cargarAutores().then(() => dibujar());
+async function init() {
+  // Precargar logo PNG extraído del PPT original
+  try {
+    STATE.imgLogo = await loadImage('Logo.png');
+  } catch {
+    STATE.imgLogo = null;
+  }
+  await cargarAutores();
+  dibujar();
+}
+
+init();
 </script>
 </body>
 </html>
