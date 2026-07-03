@@ -1,0 +1,32 @@
+[
+  {
+    "clave": "Jcordero",
+    "nombre": "Juana Cordero Moscote",
+    "bio": "Columnista de Ojo pela'o magazin | Dignidad & Compromiso en La Guajira",
+    "foto": "fotos/Jcordero.png"
+  },
+  {
+    "clave": "Jospina",
+    "nombre": "Juan Manuel Ospina",
+    "bio": "Presidente de Dignidad & Compromiso, Ex Senador. Profesor del Externado.",
+    "foto": "fotos/Jospina.png"
+  },
+  {
+    "clave": "Jrobledo",
+    "nombre": "Jorge Enrique Robledo Castillo",
+    "bio": "Exsenador de la República, fundador del partido Dignidad & Compromiso",
+    "foto": "fotos/Jrobledo.png"
+  },
+  {
+    "clave": "Euribe",
+    "nombre": "Enrique Uribe Botero",
+    "bio": "Arquitecto, Ex candidato al senado de la República",
+    "foto": "fotos/Euribe.png"
+  },
+  {
+    "clave": "CAcero",
+    "nombre": "Carlos Acero Castellanos",
+    "bio": "Abogado y Magister en Derecho Internacional de la Universidad de los Andes",
+    "foto": "fotos/CAcero.png"
+  }
+]

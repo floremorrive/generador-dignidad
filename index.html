@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generador de Columnas — Dignidad & Compromiso</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Montserrat', sans-serif;
+    background: #0d0520;
+    color: #fff;
+    min-height: 100vh;
+  }
+
+  header {
+    background: #1a0a4a;
+    border-bottom: 3px solid #f5a623;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  header h1 { font-size: 1.15rem; font-weight: 800; letter-spacing: .04em; }
+  header span { color: #f5a623; font-size: .85rem; font-weight: 600; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 0;
+    min-height: calc(100vh - 65px);
+  }
+
+  /* ── Panel izquierdo ── */
+  .panel {
+    background: #1a0a4a;
+    padding: 28px 24px;
+    border-right: 1px solid #2d1a6e;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #f5a623;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 6px;
+  }
+
+  select, input[type="text"], textarea {
+    width: 100%;
+    background: #2d1a6e;
+    border: 1px solid #4a2fa0;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .92rem;
+    padding: 10px 12px;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  select:focus, input:focus, textarea:focus { border-color: #f5a623; }
+  textarea { resize: vertical; min-height: 72px; line-height: 1.4; }
+
+  .file-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .file-btn label.btn {
+    background: #2d1a6e;
+    border: 1px solid #4a2fa0;
+    color: #f5a623;
+    font-size: .8rem;
+    font-weight: 700;
+    padding: 9px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background .15s;
+  }
+  .file-btn label.btn:hover { background: #3d2a80; }
+  .file-btn span { font-size: .78rem; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  input[type="file"] { display: none; }
+
+  .author-preview {
+    background: #2d1a6e;
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: .78rem;
+    color: #ccc;
+    line-height: 1.4;
+    min-height: 42px;
+  }
+  .author-preview strong { color: #f5a623; }
+
+  .divider { border: none; border-top: 1px solid #2d1a6e; }
+
+  .gen-btn {
+    background: #f5a623;
+    color: #1a0a4a;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    font-weight: 800;
+    border: none;
+    border-radius: 8px;
+    padding: 14px;
+    cursor: pointer;
+    letter-spacing: .05em;
+    transition: background .15s, transform .1s;
+  }
+  .gen-btn:hover { background: #e09510; }
+  .gen-btn:active { transform: scale(.97); }
+
+  .dl-btn {
+    background: #2d1a6e;
+    color: #f5a623;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .88rem;
+    font-weight: 700;
+    border: 2px solid #f5a623;
+    border-radius: 8px;
+    padding: 10px;
+    cursor: pointer;
+    letter-spacing: .04em;
+    display: none;
+    transition: background .15s;
+  }
+  .dl-btn:hover { background: #3d2a80; }
+
+  .status {
+    font-size: .78rem;
+    color: #f5a623;
+    font-style: italic;
+    text-align: center;
+    min-height: 18px;
+  }
+
+  /* ── Panel derecho (preview) ── */
+  .preview-area {
+    background: #100325;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 36px 24px;
+  }
+
+  .canvas-wrap {
+    position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,.7);
+  }
+
+  canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Sección de gestión de autores */
+  .manage-section {
+    margin-top: 4px;
+  }
+  .manage-section summary {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #aaa;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: 6px 0;
+  }
+  .manage-section summary:hover { color: #f5a623; }
+  .manage-inner { padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  @media (max-width: 800px) {
+    .layout { grid-template-columns: 1fr; }
+    .preview-area { padding: 20px 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>GENERADOR DE COLUMNAS</h1>
+    <span>Dignidad &amp; Compromiso</span>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ── Panel de control ── -->
+  <aside class="panel">
+
+    <div class="field">
+      <label>Autor</label>
+      <select id="sel-autor">
+        <option value="">— Seleccione —</option>
+      </select>
+    </div>
+
+    <div class="author-preview" id="author-preview">Seleccione un autor para ver su información.</div>
+
+    <div class="field">
+      <label>Título de la columna</label>
+      <textarea id="inp-titulo" rows="3" placeholder="Escriba aquí el título o la frase central de la columna"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Categoría</label>
+      <select id="sel-categoria">
+        <option>OPINIÓN</option>
+        <option>ANÁLISIS</option>
+        <option>ECONOMÍA</option>
+        <option>POLÍTICA</option>
+        <option>EDITORIAL</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Imagen de fondo</label>
+      <div class="file-btn">
+        <label class="btn" for="inp-fondo">Buscar…</label>
+        <span id="fondo-name">Sin imagen</span>
+      </div>
+      <input type="file" id="inp-fondo" accept="image/*">
+    </div>
+
+    <hr class="divider">
+
+    <button class="gen-btn" id="btn-gen">⚡ GENERAR IMAGEN</button>
+    <button class="dl-btn" id="btn-dl">⬇ DESCARGAR PNG</button>
+    <div class="status" id="status"></div>
+
+    <hr class="divider">
+
+    <!-- Gestión de autores -->
+    <details class="manage-section">
+      <summary>⚙ Gestión de autores</summary>
+      <div class="manage-inner">
+        <div class="field">
+          <label>Nombre</label>
+          <input type="text" id="m-nombre" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label>Bio</label>
+          <input type="text" id="m-bio" placeholder="Cargo o descripción corta">
+        </div>
+        <div class="field">
+          <label>Foto del autor</label>
+          <div class="file-btn">
+            <label class="btn" for="m-foto">Buscar…</label>
+            <span id="m-foto-name">Sin foto</span>
+          </div>
+          <input type="file" id="m-foto" accept="image/png,image/jpeg">
+        </div>
+        <p style="font-size:.72rem;color:#aaa;line-height:1.4">
+          Las fotos se guardan solo en este navegador. Para añadirlas permanentemente al sitio, súbalas a la carpeta <code>fotos/</code> en GitHub y edite <code>autores.json</code>.
+        </p>
+      </div>
+    </details>
+
+  </aside>
+
+  <!-- ── Área de preview ── -->
+  <main class="preview-area">
+    <div class="canvas-wrap">
+      <canvas id="cv" width="1080" height="1350"></canvas>
+    </div>
+  </main>
+
+</div>
+
+<script>
+// ── Estado global ──────────────────────────────────────────────────────────
+const STATE = {
+  autores: [],
+  autorActual: null,
+  imgFondo: null,
+  imgPerfil: null,
+  imgPerfilLocal: null, // override local para el autor seleccionado
+};
+
+const CANVAS_W = 1080;
+const CANVAS_H = 1350;
+
+// Colores del partido
+const PURPLE_DARK  = '#1a0a4a';
+const PURPLE_MID   = '#3d1a8a';
+const GOLD         = '#f5a623';
+const WHITE        = '#ffffff';
+const OVERLAY      = 'rgba(26,10,74,0.52)';
+
+// Layout (fracciones de CANVAS_H / CANVAS_W)
+const BG_BOTTOM_Y  = Math.round(CANVAS_H * 0.565); // donde termina la foto de fondo
+const STRIPE_H     = 10;
+const PHOTO_W      = 460;
+const PHOTO_H      = 520;
+const PHOTO_X      = (CANVAS_W - PHOTO_W) / 2;
+const PHOTO_Y      = BG_BOTTOM_Y - PHOTO_H * 0.62; // foto sobresale sobre la línea
+
+// ── Carga de autores ───────────────────────────────────────────────────────
+async function cargarAutores() {
+  try {
+    const res = await fetch('autores.json');
+    STATE.autores = await res.json();
+  } catch {
+    STATE.autores = [];
+  }
+  // Leer autores locales guardados en localStorage
+  const locales = JSON.parse(localStorage.getItem('autores_extra') || '[]');
+  STATE.autores = [...STATE.autores, ...locales];
+  poblarSelector();
+}
+
+function poblarSelector() {
+  const sel = document.getElementById('sel-autor');
+  sel.innerHTML = '<option value="">— Seleccione —</option>';
+  STATE.autores.forEach((a, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = a.nombre;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Selección de autor ─────────────────────────────────────────────────────
+document.getElementById('sel-autor').addEventListener('change', async function () {
+  const idx = this.value;
+  if (idx === '') { STATE.autorActual = null; STATE.imgPerfil = null; updatePreview('Seleccione un autor.'); return; }
+  const autor = STATE.autores[idx];
+  STATE.autorActual = autor;
+  STATE.imgPerfilLocal = null;
+
+  document.getElementById('author-preview').innerHTML =
+    `<strong>${autor.nombre}</strong><br>${autor.bio}`;
+
+  setStatus('Cargando foto del autor…');
+  if (autor.fotoBlob) {
+    STATE.imgPerfil = await loadImage(autor.fotoBlob);
+  } else if (autor.foto) {
+    try { STATE.imgPerfil = await loadImage(autor.foto); } catch { STATE.imgPerfil = null; }
+  } else {
+    STATE.imgPerfil = null;
+  }
+  setStatus('');
+  dibujar();
+});
+
+// ── Imagen de fondo ────────────────────────────────────────────────────────
+document.getElementById('inp-fondo').addEventListener('change', async function () {
+  const file = this.files[0];
+  if (!file) return;
+  document.getElementById('fondo-name').textContent = file.name;
+  setStatus('Cargando imagen de fondo…');
+  const url = URL.createObjectURL(file);
+  STATE.imgFondo = await loadImage(url);
+  setStatus('');
+  dibujar();
+});
+
+// ── Eventos de UI ──────────────────────────────────────────────────────────
+document.getElementById('inp-titulo').addEventListener('input', dibujar);
+document.getElementById('sel-categoria').addEventListener('change', dibujar);
+document.getElementById('btn-gen').addEventListener('click', () => { dibujar(); mostrarDescarga(); });
+
+document.getElementById('btn-dl').addEventListener('click', () => {
+  const cv = document.getElementById('cv');
+  const a = document.createElement('a');
+  const autor = STATE.autorActual ? STATE.autorActual.nombre.replace(/\s+/g, '_') : 'columna';
+  a.download = `${autor}_${Date.now()}.png`;
+  a.href = cv.toDataURL('image/png');
+  a.click();
+});
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function loadImage(src) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload  = () => res(img);
+    img.onerror = () => rej(new Error('No se pudo cargar: ' + src));
+    img.src = src;
+  });
+}
+
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+
+function mostrarDescarga() {
+  document.getElementById('btn-dl').style.display = 'block';
+}
+
+function updatePreview(msg) {
+  document.getElementById('author-preview').textContent = msg;
+}
+
+// ── Ajuste de imagen para llenar rect sin distorsión (center-crop) ─────────
+function drawImageCover(ctx, img, x, y, w, h) {
+  const imgR = img.naturalWidth / img.naturalHeight;
+  const boxR = w / h;
+  let sx, sy, sw, sh;
+  if (imgR > boxR) {
+    sh = img.naturalHeight;
+    sw = sh * boxR;
+    sx = (img.naturalWidth - sw) / 2;
+    sy = 0;
+  } else {
+    sw = img.naturalWidth;
+    sh = sw / boxR;
+    sx = 0;
+    sy = (img.naturalHeight - sh) / 2;
+  }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+
+// ── Ajuste de texto (wrap) ─────────────────────────────────────────────────
+function wrapText(ctx, text, x, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  let lines = [];
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (ctx.measureText(test).width > maxW && line) {
+      lines.push(line);
+      line = word;
+    } else {
+      line = test;
+    }
+  }
+  if (line) lines.push(line);
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineH));
+  return lines.length;
+}
+
+// ── Dibujo principal ───────────────────────────────────────────────────────
+function dibujar() {
+  const cv  = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const titulo    = document.getElementById('inp-titulo').value.trim();
+  const categoria = document.getElementById('sel-categoria').value;
+  const autor     = STATE.autorActual;
+
+  // Fondo completo (fallback morado)
+  ctx.fillStyle = PURPLE_DARK;
+  ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+  // ── Imagen de fondo (parte superior) ──────────────────────────────────
+  if (STATE.imgFondo) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, CANVAS_W, BG_BOTTOM_Y + STRIPE_H);
+    ctx.clip();
+    drawImageCover(ctx, STATE.imgFondo, 0, 0, CANVAS_W, BG_BOTTOM_Y + STRIPE_H);
+    ctx.restore();
+    // Overlay oscuro sobre el fondo
+    ctx.fillStyle = OVERLAY;
+    ctx.fillRect(0, 0, CANVAS_W, BG_BOTTOM_Y + STRIPE_H);
+  }
+
+  // ── Sección morada inferior ────────────────────────────────────────────
+  ctx.fillStyle = PURPLE_DARK;
+  ctx.fillRect(0, BG_BOTTOM_Y, CANVAS_W, CANVAS_H - BG_BOTTOM_Y);
+
+  // ── Línea dorada divisora ──────────────────────────────────────────────
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(0, BG_BOTTOM_Y - STRIPE_H / 2, CANVAS_W, STRIPE_H);
+
+  // ── Logo Dignidad & Compromiso (esquina superior derecha) ─────────────
+  const LOGO_X = CANVAS_W - 270;
+  const LOGO_Y = 26;
+  const LOGO_W = 244;
+  const LOGO_H = 88;
+  ctx.fillStyle = PURPLE_MID;
+  ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 26px Montserrat, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('DIGNIDAD &', LOGO_X + LOGO_W / 2, LOGO_Y + 34);
+  ctx.fillText('COMPROMISO', LOGO_X + LOGO_W / 2, LOGO_Y + 64);
+  ctx.textAlign = 'left';
+
+  // ── Foto del autor ─────────────────────────────────────────────────────
+  const img = STATE.imgPerfil;
+  if (img) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+    ctx.clip();
+    drawImageCover(ctx, img, PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+    ctx.restore();
+  } else {
+    // Placeholder gris
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(PHOTO_X, PHOTO_Y, PHOTO_W, PHOTO_H);
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.font = '500 22px Montserrat, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Foto del autor', PHOTO_X + PHOTO_W / 2, PHOTO_Y + PHOTO_H / 2);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Textos (sección inferior) ──────────────────────────────────────────
+  const TEXT_X  = 55;
+  const TEXT_W  = CANVAS_W - TEXT_X * 2;
+  let   curY    = BG_BOTTOM_Y + 60;
+
+  // Categoría
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 28px Montserrat, sans-serif';
+  ctx.fillText(categoria, TEXT_X, curY);
+  curY += 52;
+
+  // Título
+  ctx.fillStyle = WHITE;
+  ctx.font = 'bold 42px Montserrat, sans-serif';
+  const tituloTexto = titulo ? `"${titulo}"` : '"Escriba aquí el título o la frase central de la columna"';
+
+  // Reducir fuente si el texto es muy largo
+  let fontSize = 42;
+  const estimatedLines = Math.ceil(ctx.measureText(tituloTexto).width / TEXT_W);
+  if (estimatedLines > 4) {
+    fontSize = 34;
+    ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
+  }
+  if (estimatedLines > 6) {
+    fontSize = 28;
+    ctx.font = `bold ${fontSize}px Montserrat, sans-serif`;
+  }
+
+  const lineH = fontSize * 1.28;
+  const nLines = wrapText(ctx, tituloTexto, TEXT_X, curY, TEXT_W, lineH);
+  curY += nLines * lineH + 44;
+
+  // Línea divisora dorada
+  ctx.fillStyle = GOLD;
+  ctx.fillRect(TEXT_X, curY, TEXT_W, 2);
+  curY += 30;
+
+  // Nombre del autor
+  ctx.fillStyle = GOLD;
+  ctx.font = 'bold 28px Montserrat, sans-serif';
+  ctx.fillText(autor ? autor.nombre.toUpperCase() : 'NOMBRE DEL VOCERO', TEXT_X, curY);
+  curY += 38;
+
+  // Bio
+  ctx.fillStyle = WHITE;
+  ctx.font = '400 22px Montserrat, sans-serif';
+  wrapText(ctx, autor ? autor.bio : 'Partido Dignidad & Compromiso', TEXT_X, curY, TEXT_W, 30);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+cargarAutores().then(() => dibujar());
+</script>
+</body>
+</html>
