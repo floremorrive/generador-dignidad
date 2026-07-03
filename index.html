@@ -496,11 +496,8 @@ function dibujar() {
   ctx.fillStyle = PURPLE;
   ctx.fillRect(0, STRIPE_Y, W, H - STRIPE_Y);
 
-  // 4 — Línea naranja
-  ctx.fillStyle = ORANGE;
-  ctx.fillRect(0, STRIPE_Y, W, STRIPE_H);
-
-  // 5 — Foto del autor (posición exacta del PPT original)
+  // 4 — Foto del autor ANTES de la línea naranja
+  //     (igual que en el PPT: Perfil está debajo de Linea en el z-order)
   const img = STATE.imgPerfil;
   if (img) {
     ctx.save();
@@ -519,7 +516,11 @@ function dibujar() {
     ctx.textAlign = 'left';
   }
 
-  // 6 — Logo (posición exacta del PPT)
+  // 5 — Línea naranja (sobre la foto, igual que en el PPT)
+  ctx.fillStyle = ORANGE;
+  ctx.fillRect(0, STRIPE_Y, W, STRIPE_H);
+
+  // 6 — Logo (sin borde naranja — igual que el original)
   ctx.fillStyle = PURPLE;
   ctx.fillRect(LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
   ctx.fillStyle = WHITE;
