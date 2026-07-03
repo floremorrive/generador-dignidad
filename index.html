@@ -504,9 +504,11 @@ function dibujar() {
   ctx.fillStyle = PURPLE;
   ctx.fillRect(0, PURPLE_Y, W, H - PURPLE_Y);
 
-  // 4 — Raya naranja (Shape 6: top=52.48%, h=0.75%) — DETRÁS de sombra y foto
+  // 4 — Raya naranja (Shape 6: top=52.48%, h=0.75%)
+  //     Solo a los lados del recuadro de la foto (igual que en el PPT original)
   ctx.fillStyle = ORANGE;
-  ctx.fillRect(0, STRIPE_Y, W, STRIPE_H);
+  ctx.fillRect(0, STRIPE_Y, SHADOW_X, STRIPE_H);                          // lado izquierdo
+  ctx.fillRect(SHADOW_X + SHADOW_W, STRIPE_Y, W - SHADOW_X - SHADOW_W, STRIPE_H); // lado derecho
 
   // 5 — Logo (imagen PNG extraída del PPT original)
   if (STATE.imgLogo) {
